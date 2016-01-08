@@ -21,7 +21,7 @@ describe("creditCard.js", function () {
         creditCardNumber = faker.creditcard[CARD].number();
       });
 
-      it("conforms to the basic "+ CARD +" regex.", function () {
+      it("conforms to the basic "+ CARD +" regex. This also checks the length of the card number.", function () {
         var REGEX = faker.creditcard[CARD].regex();
         var cardAdhearsToRegex = REGEX.test(creditCardNumber);
         assert.ok(cardAdhearsToRegex);
@@ -30,16 +30,6 @@ describe("creditCard.js", function () {
       it("passes the Luhn algorithm check.", function () {
         var hasCorrectCheckDigit = luhnAlgorithmCheck(creditCardNumber);
         assert.ok(hasCorrectCheckDigit);
-      });
-
-      // This is not a very robust measure of correctness but when taken with the rest of the tests gives us a 'good enough' approximation of correctness.
-      it("is the correct length for the card type.", function () {
-        var CARD_DIGIT_COUNT = faker.creditcard[CARD].length();
-        var LENGTH_CHECKS = _.map(CARD_DIGIT_COUNT, function (DIGIT_COUNT) {
-          return (creditCardNumber.length == DIGIT_COUNT);
-        });
-        var hasCorrectLength = _.contains(LENGTH_CHECKS, true);
-        assert.ok(hasCorrectLength);
       });
     });
   });
