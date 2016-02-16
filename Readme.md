@@ -50,7 +50,7 @@ As of version `v3.0.0` faker.js contains a super useful generator method `Faker.
 **Example:**
 
 ``` js
-console.log(faker.fake('{{name.lastName}}, {{name.firstName}} {{name.suffix}}'));
+console.log(faker.fake(',  '));
 // outputs: "Marks, Dean Sr."
 ```
 
@@ -95,6 +95,8 @@ This will interpolate the format string with the value of methods `name.lastName
   * bsAdjective
   * bsBuzz
   * bsNoun
+* creditcard
+  * VISA
 * date
   * past
   * future
@@ -206,7 +208,6 @@ faker.locale = "de";
  * de
  * de_AT
  * de_CH
- * el_GR
  * en
  * en_AU
  * en_BORK

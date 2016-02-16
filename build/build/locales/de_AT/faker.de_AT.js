@@ -285,6 +285,90 @@ var Company = function (faker) {
 
 module['exports'] = Company;
 },{}],4:[function(require,module,exports){
+function CreditCard (faker) {
+    require('randexp').sugar();
+    var self = this;
+
+    var CARD_SCHEMAS = {
+        VISA : {
+          PREFIX : [
+            /^4539[0-9]{8}(?:[0-9]{3})?$/,
+            /^4556[0-9]{8}(?:[0-9]{3})?$/,
+            /^4916[0-9]{8}(?:[0-9]{3})?$/,
+            /^4532[0-9]{8}(?:[0-9]{3})?$/,
+            /^4929[0-9]{8}(?:[0-9]{3})?$/,
+            /^40240071[0-9]{4}(?:[0-9]{3})?$/,
+            /^4485[0-9]{8}(?:[0-9]{3})?$/,
+            /^4716[0-9]{8}(?:[0-9]{3})?$/,
+            /^4[0-9]{11}(?:[0-9]{3})?$/
+          ],
+          CVC : /^[0-9]{3}$/,
+          REGEX : /^4[0-9]{12}(?:[0-9]{3})?$/
+        }
+    };
+
+    // This is the main generate method for credit card numbers.
+    function generate (cardType) {
+        var prefixList = CARD_SCHEMAS[cardType].PREFIX;
+        var regex = faker.random.arrayElement(prefixList);
+        var baseNumber = regex.gen();
+        return baseNumber + calculateCheckDigit(baseNumber);
+    }
+
+    function generateCVC (cardType) {
+        var cvc = CARD_SCHEMAS[cardType].CVC;
+        return cvc.gen();
+    }
+
+    function calculateCheckDigit(number){
+      var luhnLookup    = [0, 2, 4, 6, 8, 1, 3, 5, 7, 9];
+      var runningTotal  = 0;
+      var index         = number.length;
+      var isOdd         = false;
+      // start at the end of the chain. You could also reverse the String.
+      while(index--) {
+          // we toggle is odd
+          isOdd = !isOdd;
+          // this it the current number we're looking at from the card number.
+          var currentValue = parseInt(number.charAt(index));
+          // if its odd we double the value. If the value of the doubling
+          // is above 9 we sum the two numbers together. We use the lookup
+          // instead of performing the operation to simplify the code and
+          // to speed it up. There is only a small finite set of answers
+          // so we take advantage of that.
+          var current = isOdd ? luhnLookup[currentValue]
+                              : currentValue;
+          // We add it to the current total or 0 as a default value.
+          runningTotal += current;
+      }
+      // calculate check digit.
+      return ( ( Math.floor(runningTotal/10) + 1 ) * 10 - runningTotal ) % 10;
+    }
+
+    // We generate the functions for each of the card types at runtime.
+    Object.keys(CARD_SCHEMAS).map(function (card) {
+        var metaCard = self[card] = {};
+
+        metaCard.number = function () {
+          return generate(card);
+        };
+
+        metaCard.cvc = function(){
+          return generateCVC(card);
+        };
+
+        metaCard.regex = function() {
+          return CARD_SCHEMAS[card].REGEX;
+        };
+    });
+
+    return self;
+};
+
+
+module['exports'] = CreditCard;
+
+},{"randexp":134}],5:[function(require,module,exports){
 var _Date = function (faker) {
   var self = this;
   self.past = function (years, refDate) {
@@ -375,7 +459,7 @@ var _Date = function (faker) {
 };
 
 module['exports'] = _Date;
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 /*
   fake.js - generator method for combining faker methods based on string input
 
@@ -439,7 +523,7 @@ function Fake (faker) {
 }
 
 module['exports'] = Fake;
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var Finance = function (faker) {
   var Helpers = faker.helpers,
       self = this;
@@ -526,7 +610,7 @@ var Finance = function (faker) {
 }
 
 module['exports'] = Finance;
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var Hacker = function (faker) {
   var self = this;
   
@@ -578,7 +662,7 @@ var Hacker = function (faker) {
 };
 
 module['exports'] = Hacker;
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 var Helpers = function (faker) {
 
   var self = this;
@@ -780,7 +864,7 @@ String.prototype.capitalize = function () { //v1.0
 */
 
 module['exports'] = Helpers;
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var Image = function (faker) {
 
   var self = this;
@@ -844,7 +928,7 @@ var Image = function (faker) {
 }
 
 module["exports"] = Image;
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /*
 
    this index.js file is used for including the faker library as a CommonJS module, instead of a bundle
@@ -925,6 +1009,9 @@ function Faker (opts) {
   var Commerce = require('./commerce');
   self.commerce = new Commerce(self);
 
+  var CreditCard = require('./credit_card');
+  self.creditcard = new CreditCard(self);
+
   // TODO: fix self.commerce = require('./commerce');
 
   var _definitions = {
@@ -979,7 +1066,7 @@ Faker.prototype.seed = function(value) {
 }
 module['exports'] = Faker;
 
-},{"./address":1,"./commerce":2,"./company":3,"./date":4,"./fake":5,"./finance":6,"./hacker":7,"./helpers":8,"./image":9,"./internet":11,"./lorem":128,"./name":129,"./phone_number":130,"./random":131}],11:[function(require,module,exports){
+},{"./address":1,"./commerce":2,"./company":3,"./credit_card":4,"./date":5,"./fake":6,"./finance":7,"./hacker":8,"./helpers":9,"./image":10,"./internet":12,"./lorem":129,"./name":130,"./phone_number":131,"./random":132}],12:[function(require,module,exports){
 var password_generator = require('../vendor/password-generator.js'),
     random_ua = require('../vendor/user-agent');
 
@@ -1094,7 +1181,7 @@ var Internet = function (faker) {
 
 module["exports"] = Internet;
 
-},{"../vendor/password-generator.js":134,"../vendor/user-agent":135}],12:[function(require,module,exports){
+},{"../vendor/password-generator.js":142,"../vendor/user-agent":143}],13:[function(require,module,exports){
 module["exports"] = [
   "###",
   "##",
@@ -1104,12 +1191,12 @@ module["exports"] = [
   "##c"
 ];
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 module["exports"] = [
   "#{city_name}"
 ];
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 module["exports"] = [
   "Aigen im Mühlkreis",
   "Allerheiligen bei Wildon",
@@ -1231,7 +1318,7 @@ module["exports"] = [
   "Übersbach"
 ];
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 module["exports"] = [
   "Ägypten",
   "Äquatorialguinea",
@@ -1472,12 +1559,12 @@ module["exports"] = [
   "Zypern"
 ];
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 module["exports"] = [
   "Österreich"
 ];
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 var address = {};
 module['exports'] = address;
 address.country = require("./country");
@@ -1493,19 +1580,19 @@ address.street_name = require("./street_name");
 address.street_address = require("./street_address");
 address.default_country = require("./default_country");
 
-},{"./building_number":12,"./city":13,"./city_name":14,"./country":15,"./default_country":16,"./postcode":18,"./secondary_address":19,"./state":20,"./state_abbr":21,"./street_address":22,"./street_name":23,"./street_root":24}],18:[function(require,module,exports){
+},{"./building_number":13,"./city":14,"./city_name":15,"./country":16,"./default_country":17,"./postcode":19,"./secondary_address":20,"./state":21,"./state_abbr":22,"./street_address":23,"./street_name":24,"./street_root":25}],19:[function(require,module,exports){
 module["exports"] = [
   "####"
 ];
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 module["exports"] = [
   "Apt. ###",
   "Zimmer ###",
   "# OG"
 ];
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 module["exports"] = [
   "Burgenland",
   "Kärnten",
@@ -1518,7 +1605,7 @@ module["exports"] = [
   "Wien"
 ];
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 module["exports"] = [
   "Bgld.",
   "Ktn.",
@@ -1531,17 +1618,17 @@ module["exports"] = [
   "W"
 ];
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 module["exports"] = [
   "#{street_name} #{building_number}"
 ];
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 module["exports"] = [
   "#{street_root}"
 ];
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 module["exports"] = [
   "Ahorn",
   "Ahorngasse (St. Andrä)",
@@ -1743,7 +1830,7 @@ module["exports"] = [
   "Ötzbruck"
 ];
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 module["exports"] = [
   "+43-6##-#######",
   "06##-########",
@@ -1751,19 +1838,19 @@ module["exports"] = [
   "06##########"
 ];
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 var cell_phone = {};
 module['exports'] = cell_phone;
 cell_phone.formats = require("./formats");
 
-},{"./formats":25}],27:[function(require,module,exports){
+},{"./formats":26}],28:[function(require,module,exports){
 var company = {};
 module['exports'] = company;
 company.suffix = require("./suffix");
 company.legal_form = require("./legal_form");
 company.name = require("./name");
 
-},{"./legal_form":28,"./name":29,"./suffix":30}],28:[function(require,module,exports){
+},{"./legal_form":29,"./name":30,"./suffix":31}],29:[function(require,module,exports){
 module["exports"] = [
   "GmbH",
   "AG",
@@ -1774,16 +1861,16 @@ module["exports"] = [
   "OHG"
 ];
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 module["exports"] = [
   "#{Name.last_name} #{suffix}",
   "#{Name.last_name}-#{Name.last_name}",
   "#{Name.last_name}, #{Name.last_name} und #{Name.last_name}"
 ];
 
-},{}],30:[function(require,module,exports){
-module.exports=require(28)
-},{"/Users/a/dev/faker.js/lib/locales/de_AT/company/legal_form.js":28}],31:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
+module.exports=require(29)
+},{"/Users/jdrew/Desktop/projects/faker.js/lib/locales/de_AT/company/legal_form.js":29}],32:[function(require,module,exports){
 var de_AT = {};
 module['exports'] = de_AT;
 de_AT.title = "German (Austria)";
@@ -1794,7 +1881,7 @@ de_AT.name = require("./name");
 de_AT.phone_number = require("./phone_number");
 de_AT.cell_phone = require("./cell_phone");
 
-},{"./address":17,"./cell_phone":26,"./company":27,"./internet":34,"./name":36,"./phone_number":42}],32:[function(require,module,exports){
+},{"./address":18,"./cell_phone":27,"./company":28,"./internet":35,"./name":37,"./phone_number":43}],33:[function(require,module,exports){
 module["exports"] = [
   "com",
   "info",
@@ -1806,20 +1893,20 @@ module["exports"] = [
   "at"
 ];
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 module["exports"] = [
   "gmail.com",
   "yahoo.com",
   "hotmail.com"
 ];
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 var internet = {};
 module['exports'] = internet;
 internet.free_email = require("./free_email");
 internet.domain_suffix = require("./domain_suffix");
 
-},{"./domain_suffix":32,"./free_email":33}],35:[function(require,module,exports){
+},{"./domain_suffix":33,"./free_email":34}],36:[function(require,module,exports){
 module["exports"] = [
   "Aaron",
   "Abdul",
@@ -2978,7 +3065,7 @@ module["exports"] = [
   "Zoé"
 ];
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 var name = {};
 module['exports'] = name;
 name.first_name = require("./first_name");
@@ -2987,7 +3074,7 @@ name.prefix = require("./prefix");
 name.nobility_title_prefix = require("./nobility_title_prefix");
 name.name = require("./name");
 
-},{"./first_name":35,"./last_name":37,"./name":38,"./nobility_title_prefix":39,"./prefix":40}],37:[function(require,module,exports){
+},{"./first_name":36,"./last_name":38,"./name":39,"./nobility_title_prefix":40,"./prefix":41}],38:[function(require,module,exports){
 module["exports"] = [
   "Abel",
   "Abicht",
@@ -4680,7 +4767,7 @@ module["exports"] = [
   "Überacker"
 ];
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 module["exports"] = [
   "#{prefix} #{first_name} #{last_name}",
   "#{first_name} #{nobility_title_prefix} #{last_name}",
@@ -4690,7 +4777,7 @@ module["exports"] = [
   "#{first_name} #{last_name}"
 ];
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 module["exports"] = [
   "zu",
   "von",
@@ -4698,13 +4785,13 @@ module["exports"] = [
   "von der"
 ];
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 module["exports"] = [
   "Dr.",
   "Prof. Dr."
 ];
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 module["exports"] = [
   "01 #######",
   "01#######",
@@ -4716,19 +4803,19 @@ module["exports"] = [
   "+43 ########"
 ];
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 var phone_number = {};
 module['exports'] = phone_number;
 phone_number.formats = require("./formats");
 
-},{"./formats":41}],43:[function(require,module,exports){
+},{"./formats":42}],44:[function(require,module,exports){
 module["exports"] = [
   "#####",
   "####",
   "###"
 ];
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 module["exports"] = [
   "#{city_prefix} #{Name.first_name}#{city_suffix}",
   "#{city_prefix} #{Name.first_name}",
@@ -4736,7 +4823,7 @@ module["exports"] = [
   "#{Name.last_name}#{city_suffix}"
 ];
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 module["exports"] = [
   "North",
   "East",
@@ -4747,7 +4834,7 @@ module["exports"] = [
   "Port"
 ];
 
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 module["exports"] = [
   "town",
   "ton",
@@ -4770,7 +4857,7 @@ module["exports"] = [
   "shire"
 ];
 
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 module["exports"] = [
   "Afghanistan",
   "Albania",
@@ -5019,7 +5106,7 @@ module["exports"] = [
   "Zimbabwe"
 ];
 
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 module["exports"] = [
   "AD",
   "AE",
@@ -5273,7 +5360,7 @@ module["exports"] = [
   "ZW"
 ];
 
-},{}],49:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 module["exports"] = [
   "Avon",
   "Bedfordshire",
@@ -5283,12 +5370,12 @@ module["exports"] = [
   "Cambridgeshire"
 ];
 
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 module["exports"] = [
   "United States of America"
 ];
 
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 var address = {};
 module['exports'] = address;
 address.city_prefix = require("./city_prefix");
@@ -5309,21 +5396,21 @@ address.street_name = require("./street_name");
 address.street_address = require("./street_address");
 address.default_country = require("./default_country");
 
-},{"./building_number":43,"./city":44,"./city_prefix":45,"./city_suffix":46,"./country":47,"./country_code":48,"./county":49,"./default_country":50,"./postcode":52,"./postcode_by_state":53,"./secondary_address":54,"./state":55,"./state_abbr":56,"./street_address":57,"./street_name":58,"./street_suffix":59,"./time_zone":60}],52:[function(require,module,exports){
+},{"./building_number":44,"./city":45,"./city_prefix":46,"./city_suffix":47,"./country":48,"./country_code":49,"./county":50,"./default_country":51,"./postcode":53,"./postcode_by_state":54,"./secondary_address":55,"./state":56,"./state_abbr":57,"./street_address":58,"./street_name":59,"./street_suffix":60,"./time_zone":61}],53:[function(require,module,exports){
 module["exports"] = [
   "#####",
   "#####-####"
 ];
 
-},{}],53:[function(require,module,exports){
-module.exports=require(52)
-},{"/Users/a/dev/faker.js/lib/locales/en/address/postcode.js":52}],54:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
+module.exports=require(53)
+},{"/Users/jdrew/Desktop/projects/faker.js/lib/locales/en/address/postcode.js":53}],55:[function(require,module,exports){
 module["exports"] = [
   "Apt. ###",
   "Suite ###"
 ];
 
-},{}],55:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 module["exports"] = [
   "Alabama",
   "Alaska",
@@ -5377,7 +5464,7 @@ module["exports"] = [
   "Wyoming"
 ];
 
-},{}],56:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 module["exports"] = [
   "AL",
   "AK",
@@ -5431,18 +5518,18 @@ module["exports"] = [
   "WY"
 ];
 
-},{}],57:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 module["exports"] = [
   "#{building_number} #{street_name}"
 ];
 
-},{}],58:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 module["exports"] = [
   "#{Name.first_name} #{street_suffix}",
   "#{Name.last_name} #{street_suffix}"
 ];
 
-},{}],59:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 module["exports"] = [
   "Alley",
   "Avenue",
@@ -5671,7 +5758,7 @@ module["exports"] = [
   "Wells"
 ];
 
-},{}],60:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 module["exports"] = [
   "Pacific/Midway",
   "Pacific/Pago_Pago",
@@ -5818,20 +5905,20 @@ module["exports"] = [
   "Pacific/Apia"
 ];
 
-},{}],61:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 module["exports"] = [
   "#{Name.name}",
   "#{Company.name}"
 ];
 
-},{}],62:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 var app = {};
 module['exports'] = app;
 app.name = require("./name");
 app.version = require("./version");
 app.author = require("./author");
 
-},{"./author":61,"./name":63,"./version":64}],63:[function(require,module,exports){
+},{"./author":62,"./name":64,"./version":65}],64:[function(require,module,exports){
 module["exports"] = [
   "Redhold",
   "Treeflex",
@@ -5897,7 +5984,7 @@ module["exports"] = [
   "Keylex"
 ];
 
-},{}],64:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 module["exports"] = [
   "0.#.#",
   "0.##",
@@ -5906,7 +5993,7 @@ module["exports"] = [
   "#.#.#"
 ];
 
-},{}],65:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 module["exports"] = [
   "2011-10-12",
   "2012-11-12",
@@ -5914,7 +6001,7 @@ module["exports"] = [
   "2013-9-12"
 ];
 
-},{}],66:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 module["exports"] = [
   "1234-2121-1221-1211",
   "1212-1221-1121-1234",
@@ -5922,7 +6009,7 @@ module["exports"] = [
   "1228-1221-1221-1431"
 ];
 
-},{}],67:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 module["exports"] = [
   "visa",
   "mastercard",
@@ -5930,14 +6017,14 @@ module["exports"] = [
   "discover"
 ];
 
-},{}],68:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 var business = {};
 module['exports'] = business;
 business.credit_card_numbers = require("./credit_card_numbers");
 business.credit_card_expiry_dates = require("./credit_card_expiry_dates");
 business.credit_card_types = require("./credit_card_types");
 
-},{"./credit_card_expiry_dates":65,"./credit_card_numbers":66,"./credit_card_types":67}],69:[function(require,module,exports){
+},{"./credit_card_expiry_dates":66,"./credit_card_numbers":67,"./credit_card_types":68}],70:[function(require,module,exports){
 module["exports"] = [
   "###-###-####",
   "(###) ###-####",
@@ -5945,9 +6032,9 @@ module["exports"] = [
   "###.###.####"
 ];
 
-},{}],70:[function(require,module,exports){
-arguments[4][26][0].apply(exports,arguments)
-},{"./formats":69,"/Users/a/dev/faker.js/lib/locales/de_AT/cell_phone/index.js":26}],71:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
+arguments[4][27][0].apply(exports,arguments)
+},{"./formats":70,"/Users/jdrew/Desktop/projects/faker.js/lib/locales/de_AT/cell_phone/index.js":27}],72:[function(require,module,exports){
 module["exports"] = [
   "red",
   "green",
@@ -5982,7 +6069,7 @@ module["exports"] = [
   "silver"
 ];
 
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 module["exports"] = [
   "Books",
   "Movies",
@@ -6008,14 +6095,14 @@ module["exports"] = [
   "Industrial"
 ];
 
-},{}],73:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 var commerce = {};
 module['exports'] = commerce;
 commerce.color = require("./color");
 commerce.department = require("./department");
 commerce.product_name = require("./product_name");
 
-},{"./color":71,"./department":72,"./product_name":74}],74:[function(require,module,exports){
+},{"./color":72,"./department":73,"./product_name":75}],75:[function(require,module,exports){
 module["exports"] = {
   "adjective": [
     "Small",
@@ -6077,7 +6164,7 @@ module["exports"] = {
   ]
 };
 
-},{}],75:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 module["exports"] = [
   "Adaptive",
   "Advanced",
@@ -6181,7 +6268,7 @@ module["exports"] = [
   "Vision-oriented"
 ];
 
-},{}],76:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 module["exports"] = [
   "clicks-and-mortar",
   "value-added",
@@ -6250,7 +6337,7 @@ module["exports"] = [
   "rich"
 ];
 
-},{}],77:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 module["exports"] = [
   "synergies",
   "web-readiness",
@@ -6298,7 +6385,7 @@ module["exports"] = [
   "methodologies"
 ];
 
-},{}],78:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 module["exports"] = [
   "implement",
   "utilize",
@@ -6362,7 +6449,7 @@ module["exports"] = [
   "recontextualize"
 ];
 
-},{}],79:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 module["exports"] = [
   "24 hour",
   "24/7",
@@ -6467,7 +6554,7 @@ module["exports"] = [
   "zero tolerance"
 ];
 
-},{}],80:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 var company = {};
 module['exports'] = company;
 company.suffix = require("./suffix");
@@ -6479,14 +6566,14 @@ company.bs_adjective = require("./bs_adjective");
 company.bs_noun = require("./bs_noun");
 company.name = require("./name");
 
-},{"./adjective":75,"./bs_adjective":76,"./bs_noun":77,"./bs_verb":78,"./descriptor":79,"./name":81,"./noun":82,"./suffix":83}],81:[function(require,module,exports){
+},{"./adjective":76,"./bs_adjective":77,"./bs_noun":78,"./bs_verb":79,"./descriptor":80,"./name":82,"./noun":83,"./suffix":84}],82:[function(require,module,exports){
 module["exports"] = [
   "#{Name.last_name} #{suffix}",
   "#{Name.last_name}-#{Name.last_name}",
   "#{Name.last_name}, #{Name.last_name} and #{Name.last_name}"
 ];
 
-},{}],82:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 module["exports"] = [
   "ability",
   "access",
@@ -6594,7 +6681,7 @@ module["exports"] = [
   "workforce"
 ];
 
-},{}],83:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 module["exports"] = [
   "Inc",
   "and Sons",
@@ -6602,19 +6689,19 @@ module["exports"] = [
   "Group"
 ];
 
-},{}],84:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 module["exports"] = [
   "/34##-######-####L/",
   "/37##-######-####L/"
 ];
 
-},{}],85:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 module["exports"] = [
   "/30[0-5]#-######-###L/",
   "/368#-######-###L/"
 ];
 
-},{}],86:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 module["exports"] = [
   "/6011-####-####-###L/",
   "/65##-####-####-###L/",
@@ -6624,7 +6711,7 @@ module["exports"] = [
   "/64[4-9]#-62##-####-####-###L/"
 ];
 
-},{}],87:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 var credit_card = {};
 module['exports'] = credit_card;
 credit_card.visa = require("./visa");
@@ -6638,14 +6725,14 @@ credit_card.solo = require("./solo");
 credit_card.maestro = require("./maestro");
 credit_card.laser = require("./laser");
 
-},{"./american_express":84,"./diners_club":85,"./discover":86,"./jcb":88,"./laser":89,"./maestro":90,"./mastercard":91,"./solo":92,"./switch":93,"./visa":94}],88:[function(require,module,exports){
+},{"./american_express":85,"./diners_club":86,"./discover":87,"./jcb":89,"./laser":90,"./maestro":91,"./mastercard":92,"./solo":93,"./switch":94,"./visa":95}],89:[function(require,module,exports){
 module["exports"] = [
   "/3528-####-####-###L/",
   "/3529-####-####-###L/",
   "/35[3-8]#-####-####-###L/"
 ];
 
-},{}],89:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 module["exports"] = [
   "/6304###########L/",
   "/6706###########L/",
@@ -6657,46 +6744,46 @@ module["exports"] = [
   "/6709#########{5,6}L/"
 ];
 
-},{}],90:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 module["exports"] = [
   "/50#{9,16}L/",
   "/5[6-8]#{9,16}L/",
   "/56##{9,16}L/"
 ];
 
-},{}],91:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 module["exports"] = [
   "/5[1-5]##-####-####-###L/",
   "/6771-89##-####-###L/"
 ];
 
-},{}],92:[function(require,module,exports){
+},{}],93:[function(require,module,exports){
 module["exports"] = [
   "/6767-####-####-###L/",
   "/6767-####-####-####-#L/",
   "/6767-####-####-####-##L/"
 ];
 
-},{}],93:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 module["exports"] = [
   "/6759-####-####-###L/",
   "/6759-####-####-####-#L/",
   "/6759-####-####-####-##L/"
 ];
 
-},{}],94:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 module["exports"] = [
   "/4###########L/",
   "/4###-####-####-###L/"
 ];
 
-},{}],95:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 var date = {};
 module["exports"] = date;
 date.month = require("./month");
 date.weekday = require("./weekday");
 
-},{"./month":96,"./weekday":97}],96:[function(require,module,exports){
+},{"./month":97,"./weekday":98}],97:[function(require,module,exports){
 // Source: http://unicode.org/cldr/trac/browser/tags/release-27/common/main/en.xml#L1799
 module["exports"] = {
   wide: [
@@ -6761,7 +6848,7 @@ module["exports"] = {
   ]
 };
 
-},{}],97:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 // Source: http://unicode.org/cldr/trac/browser/tags/release-27/common/main/en.xml#L1847
 module["exports"] = {
   wide: [
@@ -6806,7 +6893,7 @@ module["exports"] = {
   ]
 };
 
-},{}],98:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 module["exports"] = [
   "Checking",
   "Savings",
@@ -6818,7 +6905,7 @@ module["exports"] = [
   "Personal Loan"
 ];
 
-},{}],99:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 module["exports"] = {
   "UAE Dirham": {
     "code": "AED",
@@ -7498,14 +7585,14 @@ module["exports"] = {
   }
 };
 
-},{}],100:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 var finance = {};
 module['exports'] = finance;
 finance.account_type = require("./account_type");
 finance.transaction_type = require("./transaction_type");
 finance.currency = require("./currency");
 
-},{"./account_type":98,"./currency":99,"./transaction_type":101}],101:[function(require,module,exports){
+},{"./account_type":99,"./currency":100,"./transaction_type":102}],102:[function(require,module,exports){
 module["exports"] = [
   "deposit",
   "withdrawal",
@@ -7513,7 +7600,7 @@ module["exports"] = [
   "invoice"
 ];
 
-},{}],102:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 module["exports"] = [
   "TCP",
   "HTTP",
@@ -7546,7 +7633,7 @@ module["exports"] = [
   "JBOD"
 ];
 
-},{}],103:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 module["exports"] = [
   "auxiliary",
   "primary",
@@ -7568,7 +7655,7 @@ module["exports"] = [
   "mobile"
 ];
 
-},{}],104:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 var hacker = {};
 module['exports'] = hacker;
 hacker.abbreviation = require("./abbreviation");
@@ -7577,7 +7664,7 @@ hacker.noun = require("./noun");
 hacker.verb = require("./verb");
 hacker.ingverb = require("./ingverb");
 
-},{"./abbreviation":102,"./adjective":103,"./ingverb":105,"./noun":106,"./verb":107}],105:[function(require,module,exports){
+},{"./abbreviation":103,"./adjective":104,"./ingverb":106,"./noun":107,"./verb":108}],106:[function(require,module,exports){
 module["exports"] = [
   "backing up",
   "bypassing",
@@ -7597,7 +7684,7 @@ module["exports"] = [
   "parsing"
 ];
 
-},{}],106:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 module["exports"] = [
   "driver",
   "protocol",
@@ -7625,7 +7712,7 @@ module["exports"] = [
   "matrix"
 ];
 
-},{}],107:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 module["exports"] = [
   "back up",
   "bypass",
@@ -7647,7 +7734,7 @@ module["exports"] = [
   "parse"
 ];
 
-},{}],108:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 var en = {};
 module['exports'] = en;
 en.title = "English";
@@ -7668,7 +7755,7 @@ en.app = require("./app");
 en.finance = require("./finance");
 en.date = require("./date");
 
-},{"./address":51,"./app":62,"./business":68,"./cell_phone":70,"./commerce":73,"./company":80,"./credit_card":87,"./date":95,"./finance":100,"./hacker":104,"./internet":112,"./lorem":113,"./name":117,"./phone_number":124,"./team":126}],109:[function(require,module,exports){
+},{"./address":52,"./app":63,"./business":69,"./cell_phone":71,"./commerce":74,"./company":81,"./credit_card":88,"./date":96,"./finance":101,"./hacker":105,"./internet":113,"./lorem":114,"./name":118,"./phone_number":125,"./team":127}],110:[function(require,module,exports){
 module["exports"] = [
   "https://s3.amazonaws.com/uifaces/faces/twitter/jarjan/128.jpg",
   "https://s3.amazonaws.com/uifaces/faces/twitter/mahdif/128.jpg",
@@ -8938,7 +9025,7 @@ module["exports"] = [
   "https://s3.amazonaws.com/uifaces/faces/twitter/areandacom/128.jpg"
 ];
 
-},{}],110:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
 module["exports"] = [
   "com",
   "biz",
@@ -8948,22 +9035,22 @@ module["exports"] = [
   "org"
 ];
 
-},{}],111:[function(require,module,exports){
-module.exports=require(33)
-},{"/Users/a/dev/faker.js/lib/locales/de_AT/internet/free_email.js":33}],112:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
+module.exports=require(34)
+},{"/Users/jdrew/Desktop/projects/faker.js/lib/locales/de_AT/internet/free_email.js":34}],113:[function(require,module,exports){
 var internet = {};
 module['exports'] = internet;
 internet.free_email = require("./free_email");
 internet.domain_suffix = require("./domain_suffix");
 internet.avatar_uri = require("./avatar_uri");
 
-},{"./avatar_uri":109,"./domain_suffix":110,"./free_email":111}],113:[function(require,module,exports){
+},{"./avatar_uri":110,"./domain_suffix":111,"./free_email":112}],114:[function(require,module,exports){
 var lorem = {};
 module['exports'] = lorem;
 lorem.words = require("./words");
 lorem.supplemental = require("./supplemental");
 
-},{"./supplemental":114,"./words":115}],114:[function(require,module,exports){
+},{"./supplemental":115,"./words":116}],115:[function(require,module,exports){
 module["exports"] = [
   "abbas",
   "abduco",
@@ -9807,7 +9894,7 @@ module["exports"] = [
   "xiphias"
 ];
 
-},{}],115:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 module["exports"] = [
   "alias",
   "consequatur",
@@ -10060,7 +10147,7 @@ module["exports"] = [
   "repellat"
 ];
 
-},{}],116:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 module["exports"] = [
   "Aaliyah",
   "Aaron",
@@ -13071,7 +13158,7 @@ module["exports"] = [
   "Zula"
 ];
 
-},{}],117:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 var name = {};
 module['exports'] = name;
 name.first_name = require("./first_name");
@@ -13081,7 +13168,7 @@ name.suffix = require("./suffix");
 name.title = require("./title");
 name.name = require("./name");
 
-},{"./first_name":116,"./last_name":118,"./name":119,"./prefix":120,"./suffix":121,"./title":122}],118:[function(require,module,exports){
+},{"./first_name":117,"./last_name":119,"./name":120,"./prefix":121,"./suffix":122,"./title":123}],119:[function(require,module,exports){
 module["exports"] = [
   "Abbott",
   "Abernathy",
@@ -13559,7 +13646,7 @@ module["exports"] = [
   "Zulauf"
 ];
 
-},{}],119:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 module["exports"] = [
   "#{prefix} #{first_name} #{last_name}",
   "#{first_name} #{last_name} #{suffix}",
@@ -13569,7 +13656,7 @@ module["exports"] = [
   "#{first_name} #{last_name}"
 ];
 
-},{}],120:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 module["exports"] = [
   "Mr.",
   "Mrs.",
@@ -13578,7 +13665,7 @@ module["exports"] = [
   "Dr."
 ];
 
-},{}],121:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 module["exports"] = [
   "Jr.",
   "Sr.",
@@ -13593,7 +13680,7 @@ module["exports"] = [
   "DVM"
 ];
 
-},{}],122:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 module["exports"] = {
   "descriptor": [
     "Lead",
@@ -13687,7 +13774,7 @@ module["exports"] = {
   ]
 };
 
-},{}],123:[function(require,module,exports){
+},{}],124:[function(require,module,exports){
 module["exports"] = [
   "###-###-####",
   "(###) ###-####",
@@ -13711,9 +13798,9 @@ module["exports"] = [
   "###.###.#### x#####"
 ];
 
-},{}],124:[function(require,module,exports){
-arguments[4][42][0].apply(exports,arguments)
-},{"./formats":123,"/Users/a/dev/faker.js/lib/locales/de_AT/phone_number/index.js":42}],125:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
+arguments[4][43][0].apply(exports,arguments)
+},{"./formats":124,"/Users/jdrew/Desktop/projects/faker.js/lib/locales/de_AT/phone_number/index.js":43}],126:[function(require,module,exports){
 module["exports"] = [
   "ants",
   "bats",
@@ -13784,18 +13871,18 @@ module["exports"] = [
   "druids"
 ];
 
-},{}],126:[function(require,module,exports){
+},{}],127:[function(require,module,exports){
 var team = {};
 module['exports'] = team;
 team.creature = require("./creature");
 team.name = require("./name");
 
-},{"./creature":125,"./name":127}],127:[function(require,module,exports){
+},{"./creature":126,"./name":128}],128:[function(require,module,exports){
 module["exports"] = [
   "#{Address.state} #{creature}"
 ];
 
-},{}],128:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 
 var Lorem = function (faker) {
   var self = this;
@@ -13849,7 +13936,7 @@ var Lorem = function (faker) {
 
 module["exports"] = Lorem;
 
-},{}],129:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 function Name (faker) {
 
   this.firstName = function (gender) {
@@ -13947,7 +14034,7 @@ function Name (faker) {
 }
 
 module['exports'] = Name;
-},{}],130:[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 var Phone = function (faker) {
   var self = this;
 
@@ -13971,7 +14058,7 @@ var Phone = function (faker) {
 };
 
 module['exports'] = Phone;
-},{}],131:[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 var mersenne = require('../vendor/mersenne');
 
 function Random (faker, seed) {
@@ -14059,14 +14146,906 @@ module['exports'] = Random;
 
 // module.exports = random;
 
-},{"../vendor/mersenne":133}],132:[function(require,module,exports){
+},{"../vendor/mersenne":141}],133:[function(require,module,exports){
 var Faker = require('../lib');
 var faker = new Faker({ locale: 'de_AT', localeFallback: 'en' });
 faker.locales['de_AT'] = require('../lib/locales/de_AT');
 faker.locales['en'] = require('../lib/locales/en');
 module['exports'] = faker;
 
-},{"../lib":10,"../lib/locales/de_AT":31,"../lib/locales/en":108}],133:[function(require,module,exports){
+},{"../lib":11,"../lib/locales/de_AT":32,"../lib/locales/en":109}],134:[function(require,module,exports){
+var ret = require('ret');
+var DRange = require('discontinuous-range');
+var types = ret.types;
+
+
+/**
+ * If code is alphabetic, converts to other case.
+ * If not alphabetic, returns back code.
+ *
+ * @param {Number} code
+ * @return {Number}
+ */
+function toOtherCase(code) {
+  return code + (97 <= code && code <= 122 ? -32 :
+                 65 <= code && code <= 90  ?  32 : 0);
+}
+
+
+/**
+ * Randomly returns a true or false value.
+ *
+ * @return {Boolean}
+ */
+function randBool() {
+  return !this.randInt(0, 1);
+}
+
+
+/**
+ * Randomly selects and returns a value from the array.
+ *
+ * @param {Array.<Object>} arr
+ * @return {Object}
+ */
+function randSelect(arr) {
+  if (arr instanceof DRange) {
+    return arr.index(this.randInt(0, arr.length - 1));
+  }
+  return arr[this.randInt(0, arr.length - 1)];
+}
+
+
+/**
+ * expands a token to a DiscontinuousRange of characters which has a 
+ * length and an index function (for random selecting)
+ *
+ * @param {Object} token
+ * @return {DiscontinuousRange}
+ */
+function expand(token) {
+  if (token.type === ret.types.CHAR) return new DRange(token.value);
+  if (token.type === ret.types.RANGE) return new DRange(token.from, token.to);
+  if (token.type === ret.types.SET) {
+    var drange = new DRange();
+    for (var i = 0; i < token.set.length; i++) {
+      var subrange = expand.call(this, token.set[i]);
+      drange.add(subrange);
+      if (this.ignoreCase) {
+        for (var j = 0; j < subrange.length; j++) {
+          var code = subrange.index(j);
+          var otherCaseCode = toOtherCase(code);
+          if (code !== otherCaseCode) {
+            drange.add(otherCaseCode);
+          }
+        }
+      }
+    }
+    if (token.not) {
+      return this.defaultRange.clone().subtract(drange);
+    } else {
+      return drange;
+    }
+  }
+  throw new Error('unexpandable token type: ' + token.type);
+}
+
+
+/**
+ * @constructor
+ * @param {RegExp|String} regexp
+ * @param {String} m
+ */
+var RandExp = module.exports = function(regexp, m) {
+  this.defaultRange = this.defaultRange.clone();
+  if (regexp instanceof RegExp) {
+    this.ignoreCase = regexp.ignoreCase;
+    this.multiline = regexp.multiline;
+    if (typeof regexp.max === 'number') {
+      this.max = regexp.max;
+    }
+    regexp = regexp.source;
+
+  } else if (typeof regexp === 'string') {
+    this.ignoreCase = m && m.indexOf('i') !== -1;
+    this.multiline = m && m.indexOf('m') !== -1;
+  } else {
+    throw new Error('Expected a regexp or string');
+  }
+
+  this.tokens = ret(regexp);
+};
+
+
+// When a repetitional token has its max set to Infinite,
+// randexp won't actually generate a random amount between min and Infinite
+// instead it will see Infinite as min + 100.
+RandExp.prototype.max = 100;
+
+
+// Generates the random string.
+RandExp.prototype.gen = function() {
+  return gen.call(this, this.tokens, []);
+};
+
+
+// Enables use of randexp with a shorter call.
+RandExp.randexp = function(regexp, m) {
+  var randexp;
+
+  if (regexp._randexp === undefined) {
+    randexp = new RandExp(regexp, m);
+    regexp._randexp = randexp;
+  } else {
+    randexp = regexp._randexp;
+    if (typeof regexp.max === 'number') {
+      randexp.max = regexp.max;
+    }
+    if (regexp.defaultRange instanceof DRange) {
+      randexp.defaultRange = regexp.defaultRange;
+    }
+    if (typeof regexp.randInt === 'function') {
+      randexp.randInt = regexp.randInt;
+    }
+  }
+
+  return randexp.gen();
+};
+
+
+// This enables sugary /regexp/.gen syntax.
+RandExp.sugar = function() {
+  /* jshint freeze:false */
+  RegExp.prototype.gen = function() {
+    return RandExp.randexp(this);
+  };
+};
+
+// This allows expanding to include additional characters
+// for instance: RandExp.defaultRange.add(0, 65535);
+RandExp.prototype.defaultRange = new DRange(32, 126);
+
+
+/**
+ * Randomly generates and returns a number between a and b (inclusive).
+ *
+ * @param {Number} a
+ * @param {Number} b
+ * @return {Number}
+ */
+RandExp.prototype.randInt = function(a, b) {
+  return a + Math.floor(Math.random() * (1 + b - a));
+};
+
+
+/**
+ * Generate random string modeled after given tokens.
+ *
+ * @param {Object} token
+ * @param {Array.<String>} groups
+ * @return {String}
+ */
+function gen(token, groups) {
+  var stack, str, n, i, l;
+
+  switch (token.type) {
+
+
+    case types.ROOT:
+    case types.GROUP:
+      if (token.notFollowedBy) { return ''; }
+
+      // Insert placeholder until group string is generated.
+      if (token.remember && token.groupNumber === undefined) {
+        token.groupNumber = groups.push(null) - 1;
+      }
+
+      stack = token.options ?
+        randSelect.call(this, token.options) : token.stack;
+
+      str = '';
+      for (i = 0, l = stack.length; i < l; i++) {
+        str += gen.call(this, stack[i], groups);
+      }
+
+      if (token.remember) {
+        groups[token.groupNumber] = str;
+      }
+      return str;
+
+
+    case types.POSITION:
+      // Do nothing for now.
+      return '';
+
+
+    case types.SET:
+      var expanded_set = expand.call(this, token);
+      if (!expanded_set.length) return '';
+      return String.fromCharCode(randSelect.call(this, expanded_set));
+
+
+    case types.REPETITION:
+      // Randomly generate number between min and max.
+      n = this.randInt(token.min,
+              token.max === Infinity ? token.min + this.max : token.max);
+
+      str = '';
+      for (i = 0; i < n; i++) {
+        str += gen.call(this, token.value, groups);
+      }
+
+      return str;
+
+
+    case types.REFERENCE:
+      return groups[token.value - 1] || '';
+
+
+    case types.CHAR:
+      var code = this.ignoreCase && randBool.call(this) ?
+        toOtherCase(token.value) : token.value;
+      return String.fromCharCode(code);
+  }
+}
+
+
+
+},{"discontinuous-range":135,"ret":136}],135:[function(require,module,exports){
+//protected helper class
+function _SubRange(low, high) {
+    this.low = low;
+    this.high = high;
+    this.length = 1 + high - low;
+}
+
+_SubRange.prototype.overlaps = function (range) {
+    return !(this.high < range.low || this.low > range.high);
+};
+
+_SubRange.prototype.touches = function (range) {
+    return !(this.high + 1 < range.low || this.low - 1 > range.high);
+};
+
+//returns inclusive combination of _SubRanges as a _SubRange
+_SubRange.prototype.add = function (range) {
+    return this.touches(range) && new _SubRange(Math.min(this.low, range.low), Math.max(this.high, range.high));
+};
+
+//returns subtraction of _SubRanges as an array of _SubRanges (there's a case where subtraction divides it in 2)
+_SubRange.prototype.subtract = function (range) {
+    if (!this.overlaps(range)) return false;
+    if (range.low <= this.low && range.high >= this.high) return [];
+    if (range.low > this.low && range.high < this.high) return [new _SubRange(this.low, range.low - 1), new _SubRange(range.high + 1, this.high)];
+    if (range.low <= this.low) return [new _SubRange(range.high + 1, this.high)];
+    return [new _SubRange(this.low, range.low - 1)];
+};
+
+_SubRange.prototype.toString = function () {
+    if (this.low == this.high) return this.low.toString();
+    return this.low + '-' + this.high;
+};
+
+_SubRange.prototype.clone = function () {
+    return new _SubRange(this.low, this.high);
+};
+
+
+
+
+function DiscontinuousRange(a, b) {
+    if (this instanceof DiscontinuousRange) {
+        this.ranges = [];
+        this.length = 0;
+        if (a !== undefined) this.add(a, b);
+    } else {
+        return new DiscontinuousRange(a, b);
+    }
+}
+
+function _update_length(self) {
+    self.length = self.ranges.reduce(function (previous, range) {return previous + range.length}, 0);
+}
+
+DiscontinuousRange.prototype.add = function (a, b) {
+    var self = this;
+    function _add(subrange) {
+        var new_ranges = [];
+        var i = 0;
+        while (i < self.ranges.length && !subrange.touches(self.ranges[i])) {
+            new_ranges.push(self.ranges[i].clone());
+            i++;
+        }
+        while (i < self.ranges.length && subrange.touches(self.ranges[i])) {
+            subrange = subrange.add(self.ranges[i]);
+            i++;
+        }
+        new_ranges.push(subrange);
+        while (i < self.ranges.length) {
+            new_ranges.push(self.ranges[i].clone());
+            i++;
+        }
+        self.ranges = new_ranges;
+        _update_length(self);
+    }
+
+    if (a instanceof DiscontinuousRange) {
+        a.ranges.forEach(_add);
+    } else {
+        if (a instanceof _SubRange) {
+            _add(a);
+        } else {
+            if (b === undefined) b = a;
+            _add(new _SubRange(a, b));
+        }
+    }
+    return this;
+};
+
+DiscontinuousRange.prototype.subtract = function (a, b) {
+    var self = this;
+    function _subtract(subrange) {
+        var new_ranges = [];
+        var i = 0;
+        while (i < self.ranges.length && !subrange.overlaps(self.ranges[i])) {
+            new_ranges.push(self.ranges[i].clone());
+            i++;
+        }
+        while (i < self.ranges.length && subrange.overlaps(self.ranges[i])) {
+            new_ranges = new_ranges.concat(self.ranges[i].subtract(subrange));
+            i++;
+        }
+        while (i < self.ranges.length) {
+            new_ranges.push(self.ranges[i].clone());
+            i++;
+        }
+        self.ranges = new_ranges;
+        _update_length(self);
+    }
+    if (a instanceof DiscontinuousRange) {
+        a.ranges.forEach(_subtract);
+    } else {
+        if (a instanceof _SubRange) {
+            _subtract(a);
+        } else {
+            if (b === undefined) b = a;
+            _subtract(new _SubRange(a, b));
+        }
+    }
+    return this;
+};
+
+
+DiscontinuousRange.prototype.index = function (index) {
+    var i = 0;
+    while (i < this.ranges.length && this.ranges[i].length <= index) {
+        index -= this.ranges[i].length;
+        i++;
+    }
+    if (i >= this.ranges.length) return null;
+    return this.ranges[i].low + index;
+};
+
+
+DiscontinuousRange.prototype.toString = function () {
+    return '[ ' + this.ranges.join(', ') + ' ]'
+};
+
+DiscontinuousRange.prototype.clone = function () {
+    return new DiscontinuousRange(this);
+};
+
+module.exports = DiscontinuousRange;
+
+},{}],136:[function(require,module,exports){
+var util      = require('./util');
+var types     = require('./types');
+var sets      = require('./sets');
+var positions = require('./positions');
+
+
+module.exports = function(regexpStr) {
+  var i = 0, l, c,
+      start = { type: types.ROOT, stack: []},
+
+      // Keep track of last clause/group and stack.
+      lastGroup = start,
+      last = start.stack,
+      groupStack = [];
+
+
+  var repeatErr = function(i) {
+    util.error(regexpStr, 'Nothing to repeat at column ' + (i - 1));
+  };
+
+  // Decode a few escaped characters.
+  var str = util.strToChars(regexpStr);
+  l = str.length;
+
+  // Iterate through each character in string.
+  while (i < l) {
+    c = str[i++];
+
+    switch (c) {
+      // Handle escaped characters, inclues a few sets.
+      case '\\':
+        c = str[i++];
+
+        switch (c) {
+          case 'b':
+            last.push(positions.wordBoundary());
+            break;
+
+          case 'B':
+            last.push(positions.nonWordBoundary());
+            break;
+
+          case 'w':
+            last.push(sets.words());
+            break;
+
+          case 'W':
+            last.push(sets.notWords());
+            break;
+
+          case 'd':
+            last.push(sets.ints());
+            break;
+
+          case 'D':
+            last.push(sets.notInts());
+            break;
+
+          case 's':
+            last.push(sets.whitespace());
+            break;
+
+          case 'S':
+            last.push(sets.notWhitespace());
+            break;
+
+          default:
+            // Check if c is integer.
+            // In which case it's a reference.
+            if (/\d/.test(c)) {
+              last.push({ type: types.REFERENCE, value: parseInt(c, 10) });
+
+            // Escaped character.
+            } else {
+              last.push({ type: types.CHAR, value: c.charCodeAt(0) });
+            }
+        }
+
+        break;
+
+
+      // Positionals.
+      case '^':
+          last.push(positions.begin());
+        break;
+
+      case '$':
+          last.push(positions.end());
+        break;
+
+
+      // Handle custom sets.
+      case '[':
+        // Check if this class is 'anti' i.e. [^abc].
+        var not;
+        if (str[i] === '^') {
+          not = true;
+          i++;
+        } else {
+          not = false;
+        }
+
+        // Get all the characters in class.
+        var classTokens = util.tokenizeClass(str.slice(i), regexpStr);
+
+        // Increase index by length of class.
+        i += classTokens[1];
+        last.push({
+            type: types.SET
+          , set: classTokens[0]
+          , not: not
+        });
+
+        break;
+
+
+      // Class of any character except \n.
+      case '.':
+        last.push(sets.anyChar());
+        break;
+
+
+      // Push group onto stack.
+      case '(':
+        // Create group.
+        var group = {
+            type: types.GROUP
+          , stack: []
+          , remember: true
+        };
+
+        c = str[i];
+
+        // if if this is a special kind of group.
+        if (c === '?') {
+          c = str[i + 1];
+          i += 2;
+
+          // Match if followed by.
+          if (c === '=') {
+            group.followedBy = true;
+
+          // Match if not followed by.
+          } else if (c === '!') {
+            group.notFollowedBy = true;
+
+          } else if (c !== ':') {
+            util.error(regexpStr,
+                'Invalid group, character \'' + c + '\' after \'?\' at column ' +
+                (i - 1));
+          }
+
+          group.remember = false;
+        }
+
+        // Insert subgroup into current group stack.
+        last.push(group);
+
+        // Remember the current group for when the group closes.
+        groupStack.push(lastGroup);
+
+        // Make this new group the current group.
+        lastGroup = group;
+        last = group.stack;
+        break;
+
+
+      // Pop group out of stack.
+      case ')':
+        if (groupStack.length === 0) {
+          util.error(regexpStr, 'Unmatched ) at column ' + (i - 1));
+        }
+        lastGroup = groupStack.pop();
+
+        // Check if this group has a PIPE.
+        // To get back the correct last stack.
+        last = lastGroup.options ? lastGroup.options[lastGroup.options.length - 1] : lastGroup.stack;
+        break;
+
+
+      // Use pipe character to give more choices.
+      case '|':
+        // Create array where options are if this is the first PIPE
+        // in this clause.
+        if (!lastGroup.options) {
+          lastGroup.options = [lastGroup.stack];
+          delete lastGroup.stack;
+        }
+
+        // Create a new stack and add to options for rest of clause.
+        var stack = [];
+        lastGroup.options.push(stack);
+        last = stack;
+        break;
+
+
+      // Repetition.
+      // For every repetition, remove last element from last stack
+      // then insert back a RANGE object.
+      // This design is chosen because there could be more than
+      // one repetition symbols in a regex i.e. `a?+{2,3}`.
+      case '{':
+        var rs = /^(\d+)(,(\d+)?)?\}/.exec(str.slice(i)), min, max;
+        if (rs !== null) {
+          min = parseInt(rs[1], 10);
+          max = rs[2] ? rs[3] ? parseInt(rs[3], 10) : Infinity : min;
+          i += rs[0].length;
+
+          last.push({
+              type: types.REPETITION
+            , min: min
+            , max: max
+            , value: last.pop()
+          });
+        } else {
+          last.push({
+              type: types.CHAR
+            , value: 123
+          });
+        }
+        break;
+
+      case '?':
+        if (last.length === 0) {
+          repeatErr(i);
+        }
+        last.push({
+            type: types.REPETITION
+          , min: 0
+          , max: 1
+          , value: last.pop()
+        });
+        break;
+
+      case '+':
+        if (last.length === 0) {
+          repeatErr(i);
+        }
+        last.push({
+            type: types.REPETITION
+          , min: 1
+          , max: Infinity
+          , value: last.pop()
+        });
+        break;
+
+      case '*':
+        if (last.length === 0) {
+          repeatErr(i);
+        }
+        last.push({
+            type: types.REPETITION
+          , min: 0
+          , max: Infinity
+          , value: last.pop()
+        });
+        break;
+
+
+      // Default is a character that is not `\[](){}?+*^$`.
+      default:
+        last.push({
+            type: types.CHAR
+          , value: c.charCodeAt(0)
+        });
+    }
+
+  }
+
+  // Check if any groups have not been closed.
+  if (groupStack.length !== 0) {
+    util.error(regexpStr, 'Unterminated group');
+  }
+
+  return start;
+};
+
+module.exports.types = types;
+
+},{"./positions":137,"./sets":138,"./types":139,"./util":140}],137:[function(require,module,exports){
+var types = require('./types');
+
+exports.wordBoundary = function() {
+  return { type: types.POSITION, value: 'b' };
+};
+
+exports.nonWordBoundary = function() {
+  return { type: types.POSITION, value: 'B' };
+};
+
+exports.begin = function() {
+  return { type: types.POSITION, value: '^' };
+};
+
+exports.end = function() {
+  return { type: types.POSITION, value: '$' };
+};
+
+},{"./types":139}],138:[function(require,module,exports){
+var types = require('./types');
+
+var INTS = function() {
+ return [{ type: types.RANGE , from: 48, to: 57 }];
+};
+
+var WORDS = function() {
+ return [
+      { type: types.CHAR, value: 95 }
+    , { type: types.RANGE, from: 97, to: 122 }
+    , { type: types.RANGE, from: 65, to: 90 }
+  ].concat(INTS());
+};
+
+var WHITESPACE = function() {
+ return [
+      { type: types.CHAR, value: 9 }
+    , { type: types.CHAR, value: 10 }
+    , { type: types.CHAR, value: 11 }
+    , { type: types.CHAR, value: 12 }
+    , { type: types.CHAR, value: 13 }
+    , { type: types.CHAR, value: 32 }
+    , { type: types.CHAR, value: 160 }
+    , { type: types.CHAR, value: 5760 }
+    , { type: types.CHAR, value: 6158 }
+    , { type: types.CHAR, value: 8192 }
+    , { type: types.CHAR, value: 8193 }
+    , { type: types.CHAR, value: 8194 }
+    , { type: types.CHAR, value: 8195 }
+    , { type: types.CHAR, value: 8196 }
+    , { type: types.CHAR, value: 8197 }
+    , { type: types.CHAR, value: 8198 }
+    , { type: types.CHAR, value: 8199 }
+    , { type: types.CHAR, value: 8200 }
+    , { type: types.CHAR, value: 8201 }
+    , { type: types.CHAR, value: 8202 }
+    , { type: types.CHAR, value: 8232 }
+    , { type: types.CHAR, value: 8233 }
+    , { type: types.CHAR, value: 8239 }
+    , { type: types.CHAR, value: 8287 }
+    , { type: types.CHAR, value: 12288 }
+    , { type: types.CHAR, value: 65279 }
+  ];
+};
+
+var NOTANYCHAR = function() {
+ return [
+      { type: types.CHAR, value: 10 }
+    , { type: types.CHAR, value: 13 }
+    , { type: types.CHAR, value: 8232 }
+    , { type: types.CHAR, value: 8233 }
+  ];
+};
+
+// predefined class objects
+exports.words = function() {
+  return { type: types.SET, set: WORDS(), not: false };
+};
+
+exports.notWords = function() {
+  return { type: types.SET, set: WORDS(), not: true };
+};
+
+exports.ints = function() {
+  return { type: types.SET, set: INTS(), not: false };
+};
+
+exports.notInts = function() {
+  return { type: types.SET, set: INTS(), not: true };
+};
+
+exports.whitespace = function() {
+  return { type: types.SET, set: WHITESPACE(), not: false };
+};
+
+exports.notWhitespace = function() {
+  return { type: types.SET, set: WHITESPACE(), not: true };
+};
+
+exports.anyChar = function() {
+  return { type: types.SET, set: NOTANYCHAR(), not: true };
+};
+
+},{"./types":139}],139:[function(require,module,exports){
+module.exports = {
+    ROOT       : 0
+  , GROUP      : 1
+  , POSITION   : 2
+  , SET        : 3
+  , RANGE      : 4
+  , REPETITION : 5
+  , REFERENCE  : 6
+  , CHAR       : 7
+};
+
+},{}],140:[function(require,module,exports){
+var types = require('./types');
+var sets  = require('./sets');
+
+
+// All of these are private and only used by randexp.
+// It's assumed that they will always be called with the correct input.
+
+var CTRL = '@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^ ?';
+var SLSH = { '0': 0, 't': 9, 'n': 10, 'v': 11, 'f': 12, 'r': 13 };
+
+/**
+ * Finds character representations in str and convert all to
+ * their respective characters
+ *
+ * @param {String} str
+ * @return {String}
+ */
+exports.strToChars = function(str) {
+  var chars_regex = /(\[\\b\])|(\\)?\\(?:u([A-F0-9]{4})|x([A-F0-9]{2})|(0?[0-7]{2})|c([@A-Z\[\\\]\^?])|([0tnvfr]))/g;
+  str = str.replace(chars_regex, function(s, b, lbs, a16, b16, c8, dctrl, eslsh) {
+    
+    if (lbs) {
+      return s;
+    }
+
+    var code = b     ? 8 :
+               a16   ? parseInt(a16, 16) :
+               b16   ? parseInt(b16, 16) :
+               c8    ? parseInt(c8,   8) :
+               dctrl ? CTRL.indexOf(dctrl) :
+               eslsh ? SLSH[eslsh] : undefined;
+    
+    var c = String.fromCharCode(code);
+
+    // Escape special regex characters.
+    if (/[\[\]{}\^$.|?*+()]/.test(c)) {
+      c = '\\' + c;
+    }
+
+    return c;
+  });
+
+  return str;
+};
+
+
+/**
+ * turns class into tokens
+ * reads str until it encounters a ] not preceeded by a \
+ *
+ * @param {String} str
+ * @param {String} regexpStr
+ * @return {Array.<Array.<Object>, Number>}
+ */
+exports.tokenizeClass = function(str, regexpStr) {
+  var tokens = []
+    , regexp = /\\(?:(w)|(d)|(s)|(W)|(D)|(S))|((?:(?:\\)(.)|([^\]\\]))-(?:\\)?([^\]]))|(\])|(?:\\)?(.)/g
+    , rs, c
+    ;
+
+
+  while ((rs = regexp.exec(str)) != null) {
+    if (rs[1]) {
+      tokens.push(sets.words());
+
+    } else if (rs[2]) {
+      tokens.push(sets.ints());
+
+    } else if (rs[3]) {
+      tokens.push(sets.whitespace());
+
+    } else if (rs[4]) {
+      tokens.push(sets.notWords());
+
+    } else if (rs[5]) {
+      tokens.push(sets.notInts());
+
+    } else if (rs[6]) {
+      tokens.push(sets.notWhitespace());
+
+    } else if (rs[7]) {
+      tokens.push({
+          type: types.RANGE
+        , from: (rs[8] || rs[9]).charCodeAt(0)
+        ,   to: rs[10].charCodeAt(0)
+      });
+
+    } else if (c = rs[12]) {
+      tokens.push({
+          type: types.CHAR
+        , value: c.charCodeAt(0)
+      });
+
+    } else {
+      return [tokens, regexp.lastIndex];
+    }
+  }
+
+  exports.error(regexpStr, 'Unterminated character class');
+};
+
+
+/**
+ * Shortcut to throw errors.
+ *
+ * @param {String} regexp
+ * @param {String} msg
+ */
+exports.error = function(regexp, msg) {
+  throw new SyntaxError('Invalid regular expression: /' + regexp + '/: ' + msg);
+};
+
+},{"./sets":138,"./types":139}],141:[function(require,module,exports){
 // this program is a JavaScript version of Mersenne Twister, with concealment and encapsulation in class,
 // an almost straight conversion from the original program, mt19937ar.c,
 // translated by y. okada on July 17, 2006.
@@ -14354,7 +15333,7 @@ exports.seed_array = function(A) {
     gen.init_by_array(A);
 }
 
-},{}],134:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 /*
  * password-generator
  * Copyright(c) 2011-2013 Bermi Ferrer <bermi@bermilabs.com>
@@ -14420,7 +15399,7 @@ exports.seed_array = function(A) {
 
   // Establish the root object, `window` in the browser, or `global` on the server.
 }(this));
-},{}],135:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 /*
 
 Copyright (c) 2012-2014 Jeffrey Mealo
@@ -14631,5 +15610,5 @@ exports.generate = function generate() {
     return browser[random[0]](random[1]);
 };
 
-},{}]},{},[132])(132)
+},{}]},{},[133])(133)
 });

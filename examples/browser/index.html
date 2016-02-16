@@ -18,11 +18,11 @@
             // draws buttons / inputs for all faker methods
             function drawButtons () {
               $('#buttons').html('');
-              
+
               var str = '';
-              
+
               var moduleList = '<tr><td colspan="2"><ul>';
-              
+
               var modules = Object.keys(faker);
               modules = modules.sort();
               modules.forEach(function(module){
@@ -35,7 +35,7 @@
                 moduleList += '<li><a href="#' + module + '">' + module + '</a></li>';
 
                 str += moduleRow;
-                
+
                 for (var method in faker[module]) {
                   if (typeof faker[module][method] === "function") {
                     // a function was found, create a button and input for it,
@@ -81,7 +81,7 @@
             }
 
             drawButtons();
-   
+
             var _locales = [];
 
             for(var locale in faker.locales) {
@@ -95,9 +95,9 @@
                   return 1;
                 return 0;
             });
-            
+
             _locales.forEach(function(item){
-              
+
               $('.locale').append('<option value="' + item.name+ '">' + item.title + '</option>');
             });
 
@@ -111,7 +111,7 @@
               generateName();
             });
 
-            
+
             function generateName () {
 
               // make name contextual to username and email
@@ -142,7 +142,7 @@
       </script>
   </head>
   <body>
-    
+
     <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
         <div class="container">
           <div class="navbar-header">
@@ -159,7 +159,7 @@
               <li class="active"><a href="#">Home</a></li>
               <li><a href="http://github.com/marak/faker.js">Code</a></li>
               <li><a href="http://github.com/marak/faker.js/issues">Issues</a></li>
-              
+
             </ul>
           </div><!--/.nav-collapse -->
         </div>
@@ -171,10 +171,10 @@
         <br/>
         <br/>
         <br/>
-        
+
         <h2>Generate Person Example</h2>
         <br/>
-        
+
         <div class="form-group">
           <label for="select" class="col-lg-2 control-label">Locality</label>
           <div class="col-lg-10">
@@ -183,13 +183,13 @@
             <br>
           </div>
         </div>
-        
+
         <div class="form-group">
           <div class="col-lg-10 col-lg-offset-2">
             <button id="generateName" type="button" class="btn btn-primary">Generate New</button>
           </div>
         </div>
-        
+
         <div class="form-group">
           <label for="inputName" class="col-lg-2 control-label">Name:</label>
           <div class="col-lg-10">
@@ -276,7 +276,7 @@
     <div id="footer">
       <div class="container">
         <br/>
-        
+
         <strong>protip</strong>: open your console on this page and run: <code>console.log(faker); var randomName = faker.name.findName(); console.log(randomName);</code><hr/>
       </div>
     </div>
